@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
+import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -13,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 @Slf4j
 @Component
-@ServerEndpoint(value = "/myWebSocket")
+@ServerEndpoint(value = "/myWebSocket/{param}")
 public class MyWebSocket {
 
     //用来存放每个客户端对应的MyWebSocket对象
@@ -22,21 +23,19 @@ public class MyWebSocket {
     //与某个客户端的连接会话，需要通过它来给客户端发送数据
     private Session session;
 
-    private String restaurant;
-
     @OnMessage
     public void onMessage(String message, Session session) throws IOException {
 
         //群发消息
         for (MyWebSocket myWebSocket : user) {
             myWebSocket.session.getBasicRemote().sendText(session.getId() + "说：" + message);
-            //myWebSocket.session.getBasicRemote().sendText("<img src=''/>");myWebSocket.session
         }
     }
 
     @OnOpen
-    public void onOpen(Session session) {
+    public void onOpen(@PathParam("param") String param, Session session) {
         System.out.println(session.getId() + " open...");
+        System.out.println(session.getId() + " param : " + param);
         this.session = session;
         user.add(this);
     }
@@ -53,11 +52,10 @@ public class MyWebSocket {
         error.printStackTrace();
     }
 
-    //
+    //触发的发送
     public void sendMessage(String message) throws IOException {
         this.session.getBasicRemote().sendText(message);
     }
-
 
     /**
      * 群发自定义消息
